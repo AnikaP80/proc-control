@@ -24,6 +24,20 @@ class DMC_structure:
         """
         self.DMCconnectionList = DMCconnectionList
 
+    def setGoal(self, DMCnumber, newGoal):
+        self.DMCconnectionList[DMCnumber][3] = newGoal
+        return
+    
+    def setConstraints(self, DMCnumber, newConstraints):
+        self.DMCconnectionList[DMCnumber][4] = newConstraints
+        return
+    
+    def setParameters(self, DMCnumber, newParams):
+        self.DMCconnectionList[DMCnumber][5] = newParams
+        return
+    
+    def getParameters(self, DMCnumber):
+        return self.DMCconnectionList[DMCnumber][5]
     
     """_summary_
         iterate through the DMC's and update them
