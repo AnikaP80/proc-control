@@ -20,11 +20,12 @@ class DMC_controller:
     """
     # 
     def _PID_controller(self, inputList):
-        return inputList
+        
+        return np.multiply(np.array(inputList), 2)
     
     # 
     def _randomFunc(self, inputList):
-        return inputList
+        return np.multiply(np.array(inputList), -1)
     
     # wrapper to call actual update function
     # update returns output list, which typically mirrors inputList

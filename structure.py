@@ -1,6 +1,4 @@
-import numpy as np
-import networkx as nx
-import dmc
+from dmc import DMC_controller
 
 """
 
@@ -43,7 +41,7 @@ class DMC_structure:
             arr = self.DMCconnectionList[i]
             DMCparams = arr[2:6]
             DMCinput = arr[6]
-            output = dmc(*(DMCparams)).update(DMCinput)
+            output = DMC_controller(*(DMCparams)).update(DMCinput)
             
             # update DMCs that need the output
             # CURRENT ASSUMPTION - if two DMC's point to the same thing, 
@@ -52,6 +50,7 @@ class DMC_structure:
             connectedDMCs = arr[1]
             for adjDMC in connectedDMCs:
                 newDMCconnectionList[adjDMC][-1] = output
+            print("DMC", i, "'s output: ", output)
         
         # update DMCconnectionList
         self.DMCconnectionList = newDMCconnectionList
