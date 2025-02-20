@@ -2,6 +2,7 @@ from structure import DMC_structure
 
 # reminder on DMC array:
 # [DMC number, list that it points to, function type, goal, constraints, parameter, DMC input]
+# parameter is [alpha, beta, gamma, delta, labmd, Tset, P, T, Keq]
 # LAST ONE IS INPUT NOTTTT OUTPUT!!!!!
 # DMC output is what iterate() returns!!!
 arrLen = 3
