@@ -1,5 +1,5 @@
 from dmc import DMC_controller
-
+import copy
 """
 
 
@@ -8,6 +8,7 @@ from dmc import DMC_controller
 
 """
 class DMC_structure:
+        
     def __init__(self, DMCconnectionList):
         """_summary_  
         Args:
@@ -48,24 +49,31 @@ class DMC_structure:
     """
     def iterate(self):
         # make copy of list
-        newDMCconnectionList = self.DMCconnectionList
+        newDMCoutputs = [[] for _ in range(len(self.DMCconnectionList))]
+        newDMCoutputs[0] = self.DMCconnectionList[0][-1]
         output = []
         for i in range(len(self.DMCconnectionList)):
             # output = DMC(input)
+            
             arr = self.DMCconnectionList[i]
-            DMCparams = arr[2:6]
-            DMCinput = arr[6]
+            (DMCconnections, DMCparams, DMCinput) = (arr[1], arr[2:6], arr[6])
+            print("\t arr ", arr);
+            print("\t Connect ", DMCconnections)
+            
             output = DMC_controller(*(DMCparams)).update(DMCinput)
             
             # update DMCs that need the output
             # CURRENT ASSUMPTION - if two DMC's point to the same thing, 
             #   just do a basic override.
             
-            connectedDMCs = arr[1]
-            for adjDMC in connectedDMCs:
-                newDMCconnectionList[adjDMC][-1] = output
+            print(DMCconnections)
+            for adjDMC in DMCconnections:
+                newDMCoutputs[adjDMC] = output
             print("DMC", i, "'s output: ", output)
         
+        print(newDMCoutputs)
         # update DMCconnectionList
-        self.DMCconnectionList = newDMCconnectionList
+        for i in range(len(self.DMCconnectionList)):
+            self.DMCconnectionList[i][-1] = newDMCoutputs[i]
+
         return output
