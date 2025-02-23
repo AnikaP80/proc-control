@@ -1,66 +1,90 @@
 import numpy as np
 
 class DMC_controller:
-    def __init__(self, functionName, goal, constraints, paramList):
-        """_summary_
-
-        Args:
-            functionName (_type_): type of function the DMC uses
-            goal (_type_): goal of the DMC
-            paramList (_type_): list of DMC parameters/weights
-        """
+    def __init__(self, functionName):
         self.functionName = functionName
-        self.goal = goal
-        self.constraints = constraints
-        # paramlist = alpha, beta, gamma, delta, labmd, Tset, P, T, Keq
-        self._paramInit_(paramList)
-        self._phiInit_(self.alpha, self.beta, self.gamma, self.delta, self.lambd, self.Tset, self.P, self.T, self.Keq)
+        self.R = 8.314
         
-    """
-    The following functions have the following general structure:
-        input: inputList (e.g. T1, P1, V1)
-        output: outputList (e.g. T2, P2, V2)
-    """
-    # 
-    def _DMC1(self, phi1, phi2, phi3, Tcurr, R, V):
-        Tnext = phi1*Tcurr + phi2*Tcurr + phi3
-        Pnext = (R*Tnext)/V
-        Keq = 283.971 + 13323/(Tnext + 50)
+        # initialized later in reward function
+        self.Tlow = 0
+        self.Thigh = 0
+        self.Plow = 0
+        self.Phigh = 0
+        self.Keqlow = 0
+        
+    def _DMC1(self, Tcurr, Tset):
+        V = (np.pi) * 5 * 100
+        # print("goal: ", Tset, "input: ", Tcurr)
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        Pnext = (self.R * Tnext) / V
+        Keq = Tnext / 100
         return (Tnext, Pnext, Keq)
     
-    # 
-    def _DMC2(self, phi1, phi2, phi3, Tcurr, R, V):
-        Tnext = 3*phi1*Tcurr + phi2*Tcurr/2 + phi3
-        Pnext = (R*Tnext)/V
-        Keq = 283.971 + 13323/(Tnext + 50)
+    def _DMC2(self, Tcurr, Tset):
+        V = np.pi * 5 * 50
+        # print("goal: ", Tset, "input: ", Tcurr)
+        # + np.random.rand()*10 - 5
+        Tcurr += 150
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        Pnext = (self.R * Tnext) / V
+        Keq = Tnext / 100
         return (Tnext, Pnext, Keq)
     
-    # alpha, beta, gamma, delta, lambda are lists
-    def _phiInit_(self, alpha, beta, gamma, delta, lambd, Tset, P, T, Keq):
-        self.phi1 = (alpha[0]*Tset + beta[0]*P + gamma[0]*Keq + delta[0])/(lambd[0] + np.abs(T - Tset))
-        self.phi2 = (alpha[1]*Tset + beta[1]*P*P + gamma[1]*Keq + delta[1])/(lambd[1] + np.sqrt(np.abs(T-Tset)))
-        self.phi3 = (alpha[2]*Tset + beta[2]*np.log(P+1) + gamma[2]*Keq + delta[2])/(lambd[2]+np.exp(-1*np.abs(T-Tset)))
+    def DMC1constraints(self):
+        V = np.pi * 5 * 100
+        lowBound = max(0, 1.35 * V / self.R, 100 * 0.3)
+        upBound = min(10000, 2.5 * V / self.R)
+        # print((lowBound, upBound))
+        self.Tlow = 250
+        self.Thigh = 500
+        self.Plow = 1.35
+        self.Phigh = 2.5
+        self.Keqlow = 2.8
     
-    def _paramInit_(self, paramList):
-        self.alpha = paramList[0]
-        self.beta = paramList[1]
-        self.gamma = paramList[2]
-        self.delta = paramList[3]
-        self.lambd = paramList[4]
-        self.Tset = paramList[5]
-        self.P = paramList[6]
-        self.Tprev = paramList[7]
-        self.Keq = paramList[8]
+    def DMC2constraints(self):
+        V = np.pi * 5 * 50
+        lowBound = max(0, 4.5 * V / self.R, 100 * 0.75)
+        upBound = min(10000, 6 * V / self.R)
+        # print((lowBound, upBound))
         
-    # wrapper to call actual update function
-    # update returns output list, which typically mirrors inputList
-    def update(self, inputList):
-        if(self.functionName == "PID"):
-            return self._PID_controller(inputList)
-        elif(self.functionName == "random"):
-                return self._randomFunc(inputList)
-            
+        self.Tlow = 400
+        self.Thigh = 600
+        self.Plow = 4.5
+        self.Phigh = 6
+        self.Keqlow = 4.2
+    
+    def update(self, goal, inputList):
+        Tcurr = inputList[0]
+        if self.functionName == "DMC1":
+            return self._DMC1(Tcurr, goal)
+        elif self.functionName == "DMC2":
+            return self._DMC2(Tcurr, goal)
         return inputList
     
-    
-    
+    def DMCreward(self, Tgoal, outputList):
+        
+        T = outputList[0]
+        P = outputList[1]
+        Keq = outputList[2]
+        
+        alpha = 5.0  # Weight for temperature deviation
+        beta = 1.0   # Weight for pressure penalty
+        gamma = 3.0  # Weight for Keq penalty
+        
+        # Compute temperature error
+        temp_error = (T - Tgoal) ** 2 if abs(T - Tgoal) >= 5 else 0
+        
+        P_penalty = 0
+        Keq_penalty = 0
+        # Check constraints based on function type
+        if self.functionName == "DMC1":
+            self.DMC1constraints()
+        elif self.functionName == "DMC2":
+            self.DMC2constraints()
+        P_penalty = 0 if self.Plow <= P <= self.Phigh else max(P - self.Phigh, self.Plow-P)
+        Keq_penalty = 0 if Keq >= 0.3 else (0.3 - Keq)  # Constraint from archived functions
+        # Reward function
+        reward = -alpha * temp_error - beta * P_penalty - gamma * Keq_penalty + 1
+        return reward
