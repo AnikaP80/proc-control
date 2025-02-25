@@ -24,21 +24,21 @@ class DMC_structure:
              2 is our output DMC
         """
         self.DMCconnectionList = DMCconnectionList
+        self.outputList = [row[-1] for row in DMCconnectionList]
 
     def setGoal(self, DMCnumber, newGoal):
         self.DMCconnectionList[DMCnumber][3] = newGoal
         return
     
-    def setConstraints(self, DMCnumber, newConstraints):
-        self.DMCconnectionList[DMCnumber][4] = newConstraints
-        return
+    def getConstraints(self, DMCnumber):
+        struct = DMC_controller(self.DMCconnectionList[DMCnumber][2])
+        constraints = struct.getConstraints()
+        fullList = [[0, [0,0]] for _ in range(len(constraints))]
+        
+        for i in range(len(fullList)):
+            fullList[i] = [self.outputList[i], constraints[i][0], constraints[i][1]]
+        return fullList
     
-    def setParameters(self, DMCnumber, newParams):
-        self.DMCconnectionList[DMCnumber][5] = newParams
-        return
-    
-    def getParameters(self, DMCnumber):
-        return self.DMCconnectionList[DMCnumber][5]
     
     """_summary_
         iterate through the DMC's and update them
@@ -67,7 +67,7 @@ class DMC_structure:
             # print("\t Connect ", DMCconnections)
             struct = DMC_controller(DMCfunc)
             output = struct.update(DMCgoal, DMCinput)
-            reward = struct.DMCreward(DMCgoal, output)
+            # reward = struct.DMCreward(DMCgoal, output)
             
             # update DMCs that need the output
             # CURRENT ASSUMPTION - if two DMC's point to the same thing, 
@@ -81,6 +81,7 @@ class DMC_structure:
         # print(newDMCoutputs)
         # update DMCconnectionList
         for i in range(len(self.DMCconnectionList)):
+            self.outputList[i] = newDMCoutputs[i]
             self.DMCconnectionList[i][-1] = newDMCoutputs[i]
 
         return output

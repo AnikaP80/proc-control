@@ -31,7 +31,7 @@ for i in range(99):
     # print(o2[i])
     # print(f"Final output {i}: {[round(val, 2) for val in outputs]}\n\n")
 
-
+# print(struct.getConstraints(0))
 import matplotlib.pyplot as plt
 # print(o1)
 # print(o2)
