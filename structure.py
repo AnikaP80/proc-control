@@ -52,26 +52,33 @@ class DMC_structure:
         newDMCoutputs = [[] for _ in range(len(self.DMCconnectionList))]
         newDMCoutputs[0] = self.DMCconnectionList[0][-1]
         output = []
+        
         for i in range(len(self.DMCconnectionList)):
             # output = DMC(input)
             
             arr = self.DMCconnectionList[i]
-            (DMCconnections, DMCparams, DMCinput) = (arr[1], arr[2:6], arr[6])
-            print("\t arr ", arr);
-            print("\t Connect ", DMCconnections)
+            # print("arr", arr)
+            DMCconnections = arr[1]
+            DMCfunc=  arr[2]
+            DMCgoal = arr[3]
+            DMCinput = arr[4]
             
-            output = DMC_controller(*(DMCparams)).update(DMCinput)
+            # print("\t arr ", arr);
+            # print("\t Connect ", DMCconnections)
+            struct = DMC_controller(DMCfunc)
+            output = struct.update(DMCgoal, DMCinput)
+            reward = struct.DMCreward(DMCgoal, output)
             
             # update DMCs that need the output
             # CURRENT ASSUMPTION - if two DMC's point to the same thing, 
             #   just do a basic override.
             
-            print(DMCconnections)
+            # print(DMCconnections)
             for adjDMC in DMCconnections:
                 newDMCoutputs[adjDMC] = output
-            print("DMC", i, "'s output: ", output)
+            # print(f"DMC {i+1}'s output: {[round(val, 2) for val in output]} with reward {round(reward, 2)}")
         
-        print(newDMCoutputs)
+        # print(newDMCoutputs)
         # update DMCconnectionList
         for i in range(len(self.DMCconnectionList)):
             self.DMCconnectionList[i][-1] = newDMCoutputs[i]
