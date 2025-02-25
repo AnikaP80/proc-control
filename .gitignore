@@ -1,5 +1,5 @@
 # Virtual environment
-venv/
+venv_proc-control/
 myenv/
 .env/
 
