@@ -1,0 +1,31 @@
+# Virtual environment
+venv/
+myenv/
+.env/
+
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Dependency logs
+pip-log.txt
+pip-wheel-metadata/
+
+# Editor settings
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+ 
