@@ -31,24 +31,53 @@ for i in range(99):
     # print(o2[i])
     # print(f"Final output {i}: {[round(val, 2) for val in outputs]}\n\n")
 
-# print(struct.getConstraints(0))
+print("constraints")
+print(struct.getConstraints(0))
 import matplotlib.pyplot as plt
-# print(o1)
-# print(o2)
-# Extract a specific metric (e.g., temperature)
-t1 = [output[0] for output in o1 if output]  # Extracting T values
-t2 = [output[0] for output in o2 if output]  # Extracting T
-h1 = [goal for goal in goals1 if goal]
-h2 = [goal for goal in goals2 if goal]
-iterations = list(range(1, len(t1) + 1))
+# # print(o1)
+# # print(o2)
+# # Extract a specific metric (e.g., temperature)
+# t1 = [output[0] for output in o1 if output]  # Extracting T values
+# t2 = [output[0] for output in o2 if output]  # Extracting T
+# h1 = [goal for goal in goals1 if goal]
+# h2 = [goal for goal in goals2 if goal]
+# iterations = list(range(1, len(t1) + 1))
 
-plt.plot(iterations, t1, label="t1", marker='o')
-plt.plot(iterations, t2, label="t2", marker='s')
-plt.plot(iterations, h1, label="g1", marker='o')
-plt.plot(iterations, h2, label="g2", marker='s')
+# plt.plot(iterations, t1, label="t1", marker='o')
+# plt.plot(iterations, t2, label="t2", marker='s')
+# plt.plot(iterations, h1, label="g1", marker='o')
+# plt.plot(iterations, h2, label="g2", marker='s')
 
-plt.xlabel("Iteration")
-plt.ylabel("Values")
-plt.title("DMC Outputs Over Iterations")
-plt.legend()
-plt.show()
+# plt.xlabel("Iteration")
+# plt.ylabel("Values")
+# plt.title("DMC Outputs Over Iterations")
+# plt.legend()
+# plt.show()
+
+n_reward = 0
+
+#for each DMC
+for i in range(len(DMCarr)):
+    #get all constraints of the DMC
+    for bound in struct.getConstraints(i):
+        #bound: [current, LB, UB]
+        buffer = (bound[2]-bound[1])*0.1
+        #if inf bounds, just have zero buffer - TODO: make this better
+        if buffer == float('inf'):
+            buffer = 0
+        print("buffer is", buffer,"lower bound is", bound[1], "upper bound is", bound[2])
+        UBB = bound[2] - buffer
+        LBB = bound[1] + buffer
+        print(bound[0], LBB, UBB)
+        if bound[0] > LBB and bound[0] < UBB:
+            nwd = 0
+        else:
+            #TODO: make a more sophisticated negative reward, i.e. exponential curve
+            nwd = 5
+
+        n_reward += nwd
+
+print("negative reward", n_reward)
+
+    
+
