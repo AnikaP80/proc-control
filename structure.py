@@ -36,7 +36,7 @@ class DMC_structure:
         fullList = [[0, [0,0]] for _ in range(len(constraints))]
         
         for i in range(len(fullList)):
-            fullList[i] = [self.outputList[i], constraints[i][0], constraints[i][1]]
+            fullList[i] = [self.outputList[DMCnumber][i], constraints[i][0], constraints[i][1]]
         return fullList
     
     
