@@ -1,4 +1,5 @@
 # Virtual environment
+__pycache__
 venv_proc-control/
 myenv/
 .env/
