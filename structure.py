@@ -47,7 +47,7 @@ class DMC_structure:
         
         
     """
-    def iterate(self):
+    def iterate(self, newTemperatureGoals):
         # make copy of list
         newDMCoutputs = [[] for _ in range(len(self.DMCconnectionList))]
         newDMCoutputs[0] = self.DMCconnectionList[0][-1]
@@ -60,25 +60,22 @@ class DMC_structure:
             # print("arr", arr)
             DMCconnections = arr[1]
             DMCfunc=  arr[2]
+            
+            # GYM should update new temperature goals
             DMCgoal = arr[3]
+            DMCgoal[1] = newTemperatureGoals[i] 
+            
             DMCinput = arr[4]
             
-            # print("\t arr ", arr);
-            # print("\t Connect ", DMCconnections)
             struct = DMC_controller(DMCfunc)
             output = struct.update(DMCgoal, DMCinput)
-            # reward = struct.DMCreward(DMCgoal, output)
             
             # update DMCs that need the output
             # CURRENT ASSUMPTION - if two DMC's point to the same thing, 
             #   just do a basic override.
-            
-            # print(DMCconnections)
             for adjDMC in DMCconnections:
                 newDMCoutputs[adjDMC] = output
-            # print(f"DMC {i+1}'s output: {[round(val, 2) for val in output]} with reward {round(reward, 2)}")
         
-        # print(newDMCoutputs)
         # update DMCconnectionList
         for i in range(len(self.DMCconnectionList)):
             self.outputList[i] = newDMCoutputs[i]
