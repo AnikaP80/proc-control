@@ -39,6 +39,8 @@ class DMC_structure:
             fullList[i] = [self.outputList[DMCnumber][i], constraints[i][0], constraints[i][1]]
         return fullList
     
+    def getSize(self):
+        return len(self.outputList)
     
     """_summary_
         iterate through the DMC's and update them
