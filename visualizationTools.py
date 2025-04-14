@@ -1,4 +1,5 @@
 from structure import DMC_structure
+from reward import reward_function
 import matplotlib.pyplot as plt
 import math 
 
@@ -23,6 +24,7 @@ def simVis(arr):
             # print("updated temp")
         # print(tempGoals)
         final_output = struct.iterate(tempGoals)
+        print(reward_function(struct, final_output))
         final_outputs.append(final_output)
 
         for i in range(n_dmcs):

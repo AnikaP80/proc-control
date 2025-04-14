@@ -91,6 +91,7 @@ class DMC_Env(gym.Env):
         
         
         # Update dynamics: new velocity and new position.
+        # print(action)
         output = self.struct.iterate(action)
         
         tempstate = []
