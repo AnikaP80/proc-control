@@ -106,7 +106,12 @@ class SoftActorCritic:
     def sample_action(self, current_state):
         current_state_ = np.array(current_state, ndmin=2)
         action, _ = self.policy(current_state_)
-        return action[0]
+        # Convert the first output row to a numpy array and ensure it is at least 1D.
+        action = np.array(action[0])
+        if action.ndim == 0:
+            action = np.array([action])
+        return action
+
 
 
     def update_q_network(self, current_states, actions, rewards, next_states, ends):
