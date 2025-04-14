@@ -32,7 +32,6 @@ while True:
 
     # Instantiate the custom environment with DMCarr.
     env = DMC_Env(DMCarr)
-    env.seed(args.seed)
 
     # Get the dimensions from the environment's spaces.
     state_space = env.observation_space.shape[0]

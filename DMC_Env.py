@@ -2,6 +2,7 @@ import gym
 from gym import spaces
 import numpy as np
 from structure import DMC_structure
+from reward import reward_function
 
 class DMC_Env(gym.Env):
     """
@@ -90,7 +91,7 @@ class DMC_Env(gym.Env):
         
         
         # Update dynamics: new velocity and new position.
-        self.struct.iterate(action)
+        output = self.struct.iterate(action)
         
         tempstate = []
         for i in range(self.num_DMC):
@@ -101,7 +102,7 @@ class DMC_Env(gym.Env):
         self.steps += 1
         
         # PUT ACTUAL REWARD FUNCTION HERE
-        reward = 0
+        rew = reward_function(self.struct, output)
         
         # Determine if the episode is done.
         done = False
@@ -109,15 +110,15 @@ class DMC_Env(gym.Env):
             done = True
         
         info = {}
-        return self.state, reward, done, info
+        return self.state, rew, done, info
 
-    def render(self, mode='human'):
-        """
-        TODO: Renders the current state of the environment.
-        For simplicity, this implementation prints the state to the console.
-        """
-        pos, vel = self.state
-        print(f"Step: {self.steps}, Position: {pos:.2f}, Velocity: {vel:.2f}")
+    # def render(self, mode='human'):
+    #     """
+    #     TODO: Renders the current state of the environment.
+    #     For simplicity, this implementation prints the state to the console.
+    #     """
+    #     pos, vel = self.state
+    #     print(f"Step: {self.steps}, Position: {pos:.2f}, Velocity: {vel:.2f}")
 
     def close(self):
         """
