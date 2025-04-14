@@ -1,5 +1,5 @@
 from dmc import DMC_controller
-import copy
+import numpy as np
 """
 
 
@@ -10,25 +10,16 @@ import copy
 class DMC_structure:
         
     def __init__(self, DMCconnectionList):
-        """_summary_  
-        Args:
-            DMCconnectionList: array with the following specifications:
-            
-            DMC Number, connected DMCs, DMC function name, goal, constraints, parameters, DMC input
-            ex: 
-            [[0, [1], PID, 25, [1, 0, 0], [20, ...], [25, 6, 1]],
-             [1, [2], random, 10, [0, 10, 21], [10, ...], [5, 20, 100]],
-             ]
-             
-             0 is our starting DMC
-             2 is our output DMC
-        """
         self.DMCconnectionList = DMCconnectionList
         self.outputList = [row[-1] for row in DMCconnectionList]
 
     def setGoal(self, DMCnumber, newGoal):
         self.DMCconnectionList[DMCnumber][3] = newGoal
+        # print("Set the goal of ", DMCnumber, " to ", newGoal)
         return
+    
+    def getGoal(self, DMCnumber):
+        return self.DMCconnectionList[DMCnumber][3]
     
     def getConstraints(self, DMCnumber):
         struct = DMC_controller(self.DMCconnectionList[DMCnumber][2])
@@ -52,35 +43,34 @@ class DMC_structure:
     def iterate(self, newTemperatureGoals):
         # make copy of list
         newDMCoutputs = [[] for _ in range(len(self.DMCconnectionList))]
-        newDMCoutputs[0] = self.DMCconnectionList[0][-1]
         output = []
         
         for i in range(len(self.DMCconnectionList)):
-            # output = DMC(input)
-            
             arr = self.DMCconnectionList[i]
+            
             # print("arr", arr)
             DMCconnections = arr[1]
             DMCfunc=  arr[2]
             
             # GYM should update new temperature goals
-            DMCgoal = arr[3]
-            DMCgoal[1] = newTemperatureGoals[i] 
+            DMCgoal = newTemperatureGoals[i] 
             
             DMCinput = arr[4]
             
             struct = DMC_controller(DMCfunc)
+            if DMCconnections == []:
+                finaloutput = struct.update(DMCgoal, DMCinput)
             output = struct.update(DMCgoal, DMCinput)
             
             # update DMCs that need the output
-            # CURRENT ASSUMPTION - if two DMC's point to the same thing, 
-            #   just do a basic override.
             for adjDMC in DMCconnections:
-                newDMCoutputs[adjDMC] = output
+                newDMCoutputs[adjDMC].append(output)
+        
         
         # update DMCconnectionList
         for i in range(len(self.DMCconnectionList)):
-            self.outputList[i] = newDMCoutputs[i]
-            self.DMCconnectionList[i][-1] = newDMCoutputs[i]
+            self.outputList[i] = [sum(col) / len(col) for col in zip(*newDMCoutputs[i])]
+            # print(self.outputList[i])
+            self.DMCconnectionList[i][-1] = [sum(col) / len(col) for col in zip(*newDMCoutputs[i])]
 
-        return output
+        return finaloutput

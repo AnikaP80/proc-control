@@ -5,77 +5,156 @@ class DMC_controller:
         self.functionName = functionName
         self.R = 8.314
         
-        # initialized later in reward function
-        # self.Tlow = 0
-        # self.Thigh = 0
-        # self.Plow = 0
-        # self.Phigh = 0
-        # self.Keqlow = 0
-        
-    def _DMC1(self, Tcurr, Tset):
+    def _DMC0(self, Tcurr, Tset):
         V = (np.pi) * 5 * 100
-        # print("goal: ", Tset, "input: ", Tcurr)
         change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
         Tnext = Tcurr + change + (np.random.rand()*10 - 5)
-        Pnext = (self.R * Tnext) / V
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
         Keq = Tnext / 100
         return (Tnext, Pnext, Keq)
     
-    def _DMC2(self, Tcurr, Tset):
+    def DMC0constraints(self):
+        return [[250, 500], [1.35, 2.5], [2.8, float('inf')]]
+        
+    def _DMC1(self, Tcurr, Tset):
         V = np.pi * 5 * 50
-        # print("goal: ", Tset, "input: ", Tcurr)
-        # + np.random.rand()*10 - 5
-        Tcurr += 150
         change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
         Tnext = Tcurr + change + (np.random.rand()*10 - 5)
-        Pnext = (self.R * Tnext) / V
-        Keq = Tnext / 100
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 400
+        Keq = 3*(((Tnext/100 - 4)**2 + 1)**(-1))
         return (Tnext, Pnext, Keq)
     
     def DMC1constraints(self):
-        return [[250, 500], [1.35, 2.5], [2.8, float('inf')]]
+        return [[350, 600], [4.5, 6], [1.2, float('inf')]]
+    
+    def _DMC2(self, Tcurr, Tset):
+        V = np.pi * 5 * 75
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
         
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 450
+        Keq = 4*(((Tnext/45 - 10)**2 + 1)**(-1))
+        return (Tnext, Pnext, Keq)
     
     def DMC2constraints(self):
-        return [[400, 600], [4.5, 6], [4.2, float('inf')]]
+        return [[400, 500], [2.5, 5.5], [1.7, float('inf')]]
+    
+    def _DMC3(self, Tcurr, Tset):
+        V = np.pi * 5 * 100
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 420
+        Keq = 2*(((Tnext/20 - 21)**2 + 1)**(-1))
+        return (Tnext, Pnext, Keq)
+    
+    def DMC3constraints(self):
+        return [[300, 500], [1.0, 3.75], [1.3, float('inf')]]
+    
+    def _DMC4(self, Tcurr, Tset):
+        V = np.pi * 5 * 50
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 450
+        Keq = 3*(((Tnext/4.5 - 100)**2 + 1)**(-1))
+        return (Tnext, Pnext, Keq)
+    
+    def DMC4constraints(self):
+        return [[400, 600], [0.5, 5.5], [1.5, float('inf')]]
+    
+    def _DMC5(self, Tcurr, Tset):
+        V = np.pi * 5 * 75
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 350
+        Keq = 2.5*(((Tnext/17.5 - 20)**2 + 1)**(-1))
+        return (Tnext, Pnext, Keq)
+    
+    def DMC5constraints(self):
+        return [[200, 400], [1.5, 4.5], [1, float('inf')]]
+    
+    def _DMC6(self, Tcurr, Tset):
+        V = np.pi * 5 * 100
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 350
+        Keq = 5.5*(((Tnext/35 - 10)**2 + 1)**(-1))
+        return (Tnext, Pnext, Keq)
+    
+    def DMC6constraints(self):
+        return [[250, 450], [0.5, 3.5], [3.1, float('inf')]]
+    
+    def _DMC7(self, Tcurr, Tset):
+        V = np.pi * 5 * 50
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 470
+        Keq = 1.5*(((Tnext/23.5 - 20)**2 + 1)**(-1))
+        return (Tnext, Pnext, Keq)
+    
+    def DMC7constraints(self):
+        return [[400, 600], [4.5, 6], [1, float('inf')]]
+    
+    def _DMC8(self, Tcurr, Tset):
+        V = np.pi * 5 * 75
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 400
+        Keq = 2*(((Tnext/40 - 10)**2 + 1)**(-1))
+        return (Tnext, Pnext, Keq)
+    
+    def DMC8constraints(self):
+        return [[200, 500], [2.5, 5], [1.1, float('inf')]]
+    
+    def _DMC9(self, Tcurr, Tset):
+        V = np.pi * 5 * 100
+        change = Tset - Tcurr if Tset-Tcurr <= 5 else (Tset - Tcurr)/10
+        Tnext = Tcurr + change + (np.random.rand()*10 - 5)
+        
+        Pnext = (self.R * Tnext) / V + (np.random.rand()*0.02 - 0.01)
+        
+        # max @ 500
+        Keq = 3*(((Tnext/50 - 10)**2 + 1)**(-1))
+        return (Tnext, Pnext, Keq)
+    
+    def DMC9constraints(self):
+        return [[400, 600], [1, 3], [1.3, float('inf')]]
+    
     
     def getConstraints(self):
-        if self.functionName == "DMC1":
-            return self.DMC1constraints()
-        elif self.functionName == "DMC2":
-            return self.DMC2constraints()
-        return [[0,0], [0,0], [0,0]]
+        method = getattr(self, f"{self.functionName}constraints", None)
+        if callable(method):
+            return method()
+        else:
+            return [[0, 0], [0, 0], [0, 0]]
     
     def update(self, goal, inputList):
         Tcurr = inputList[0]
-        if self.functionName == "DMC1":
-            return self._DMC1(Tcurr, goal)
-        elif self.functionName == "DMC2":
-            return self._DMC2(Tcurr, goal)
-        return inputList
-    
-    # def DMCreward(self, Tgoal, outputList):
-        
-    #     T = outputList[0]
-    #     P = outputList[1]
-    #     Keq = outputList[2]
-        
-    #     alpha = 5.0  # Weight for temperature deviation
-    #     beta = 1.0   # Weight for pressure penalty
-    #     gamma = 3.0  # Weight for Keq penalty
-        
-    #     # Compute temperature error
-    #     temp_error = (T - Tgoal) ** 2 if abs(T - Tgoal) >= 5 else 0
-        
-    #     P_penalty = 0
-    #     Keq_penalty = 0
-    #     # Check constraints based on function type
-    #     if self.functionName == "DMC1":
-    #         self.DMC1constraints()
-    #     elif self.functionName == "DMC2":
-    #         self.DMC2constraints()
-    #     P_penalty = 0 if self.Plow <= P <= self.Phigh else max(P - self.Phigh, self.Plow-P)
-    #     Keq_penalty = 0 if Keq >= 0.3 else (0.3 - Keq)  # Constraint from archived functions
-    #     # Reward function
-    #     reward = -alpha * temp_error - beta * P_penalty - gamma * Keq_penalty + 1
-    #     return reward
+        method = getattr(self, f"_{self.functionName}", None)
+        if callable(method):
+            return method(Tcurr, goal)
+        else:
+            return inputList
