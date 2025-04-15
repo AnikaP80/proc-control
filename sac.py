@@ -1,14 +1,16 @@
 import tensorflow as tf
-import tensorflow_probability as tfp
+# import tensorflow_probability as tfp
 from tensorflow.keras import layers
 from tensorflow.keras import Model
 import numpy as np
 
-tf.keras.backend.set_floatx('float64')
+tf.keras.backend.set_floatx('float32')
 
 #copied directly from https://github.com/shakti365/soft-actor-critic/blob/master/src/play.py
 
-EPSILON = 1e-16
+# EPSILON = 1e-16
+# Define a small constant to avoid log(0)
+EPSILON = 1e-6
 
 class Actor(Model):
 
@@ -26,28 +28,67 @@ class Actor(Model):
         a2 = self.dense2_layer(a1)
         mu = self.mean_layer(a2)
 
-        # Standard deviation is bounded by a constraint of being non-negative
-        # therefore we produce log stdev as output which can be [-inf, inf]
+        # Generate log standard deviation and exponentiate to get sigma
         log_sigma = self.stdev_layer(a2)
         sigma = tf.exp(log_sigma)
 
-        # Use re-parameterization trick to deterministically sample action from
-        # the policy network. First, sample from a Normal distribution of
-        # sample size as the action and multiply it with stdev
-        dist = tfp.distributions.Normal(mu, sigma)
-        action_ = dist.sample()
+        # Reparameterization trick:
+        # Sample noise from a standard normal distribution (same shape as mu)
+        noise = tf.random.normal(tf.shape(mu), dtype=mu.dtype)
+        # Compute the unsquashed action using mu and sigma
+        action_ = mu + sigma * noise
 
-        # Apply the tanh squashing to keep the gaussian bounded in (-1,1)
+        # Apply tanh squashing to ensure the output lies in (-1, 1)
         action = tf.tanh(action_)
 
-        # Calculate the log probability
-        log_pi_ = dist.log_prob(action_)
-        # Change log probability to account for tanh squashing as mentioned in
-        # Appendix C of the paper
-        log_pi = log_pi_ - tf.reduce_sum(tf.math.log(1 - action**2 + EPSILON), axis=1,
-                                         keepdims=True)
+        # Manually compute the log probability of the unsquashed action.
+        # For each element, the log probability of the normal distribution is:
+        # -0.5 * (((x - mu) / sigma)^2 + 2*log(sigma) + log(2*pi))
+        gaussian_log_prob = -0.5 * (
+            ((action_ - mu) / sigma) ** 2 
+            + 2 * tf.math.log(sigma) 
+            + tf.math.log(2 * np.pi)
+        )
+        # Sum the log probabilities over the action dimensions
+        gaussian_log_prob = tf.reduce_sum(gaussian_log_prob, axis=1, keepdims=True)
+
+        # Adjust the log probability to account for the tanh squashing.
+        # (Refer to Appendix C in the SAC paper for details.)
+        log_pi = gaussian_log_prob - tf.reduce_sum(
+            tf.math.log(1 - action**2 + EPSILON), axis=1, keepdims=True
+        )
 
         return action, log_pi
+
+
+    # def call(self, state):
+    #     # Get mean and standard deviation from the policy network
+    #     a1 = self.dense1_layer(state)
+    #     a2 = self.dense2_layer(a1)
+    #     mu = self.mean_layer(a2)
+
+    #     # Standard deviation is bounded by a constraint of being non-negative
+    #     # therefore we produce log stdev as output which can be [-inf, inf]
+    #     log_sigma = self.stdev_layer(a2)
+    #     sigma = tf.exp(log_sigma)
+
+    #     # Use re-parameterization trick to deterministically sample action from
+    #     # the policy network. First, sample from a Normal distribution of
+    #     # sample size as the action and multiply it with stdev
+    #     dist = tfp.distributions.Normal(mu, sigma)
+    #     action_ = dist.sample()
+
+    #     # Apply the tanh squashing to keep the gaussian bounded in (-1,1)
+    #     action = tf.tanh(action_)
+
+    #     # Calculate the log probability
+    #     log_pi_ = dist.log_prob(action_)
+    #     # Change log probability to account for tanh squashing as mentioned in
+    #     # Appendix C of the paper
+    #     log_pi = log_pi_ - tf.reduce_sum(tf.math.log(1 - action**2 + EPSILON), axis=1,
+    #                                      keepdims=True)
+
+    #     return action, log_pi
 
     @property
     def trainable_variables(self):
@@ -92,8 +133,8 @@ class SoftActorCritic:
         self.writer = writer
         self.epoch_step = epoch_step
 
-        self.alpha = tf.Variable(0.0, dtype=tf.float64)
-        self.target_entropy = -tf.constant(action_dim, dtype=tf.float64)
+        self.alpha = tf.Variable(0.0, dtype=tf.float32)
+        self.target_entropy = -tf.constant(action_dim, dtype=tf.float32)
         self.gamma = gamma
         self.polyak = polyak
 
