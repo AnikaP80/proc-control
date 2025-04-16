@@ -151,6 +151,7 @@ class SoftActorCritic:
         action = np.array(action[0])
         if action.ndim == 0:
             action = np.array([action])
+        print("Action: ", action)
         return action
 
 
