@@ -35,5 +35,7 @@ def reward_function(struct, output):
         penalty -= np.sum(in_bounds) * 2.0
     
     reward -= penalty
+
+    reward = reward * 0.02 #this is to keep reward roughly between 1 and 10 for training.
     # print(reward)
     return reward

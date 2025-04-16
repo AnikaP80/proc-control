@@ -32,6 +32,12 @@ class Actor(Model):
         log_sigma = self.stdev_layer(a2)
         sigma = tf.exp(log_sigma)
 
+        # Clamp log_sigma
+        LOG_SIGMA_MIN = -10.0
+        LOG_SIGMA_MAX = 2.0
+        log_sigma = tf.clip_by_value(log_sigma, LOG_SIGMA_MIN, LOG_SIGMA_MAX)
+        sigma = tf.exp(log_sigma)
+
         # Reparameterization trick:
         # Sample noise from a standard normal distribution (same shape as mu)
         noise = tf.random.normal(tf.shape(mu), dtype=mu.dtype)
@@ -40,15 +46,17 @@ class Actor(Model):
 
         # Apply tanh squashing to ensure the output lies in (-1, 1)
         action = tf.tanh(action_)
+        action = tf.clip_by_value(action, -1.0 + EPSILON, 1.0 - EPSILON)
 
         # Manually compute the log probability of the unsquashed action.
         # For each element, the log probability of the normal distribution is:
         # -0.5 * (((x - mu) / sigma)^2 + 2*log(sigma) + log(2*pi))
         gaussian_log_prob = -0.5 * (
-            ((action_ - mu) / sigma) ** 2 
-            + 2 * tf.math.log(sigma) 
-            + tf.math.log(2 * np.pi)
+            ((action_ - mu) / sigma) ** 2
+            + 2.0 * tf.math.log(sigma)
+            + tf.math.log(2.0 * np.pi)
         )
+
         # Sum the log probabilities over the action dimensions
         gaussian_log_prob = tf.reduce_sum(gaussian_log_prob, axis=1, keepdims=True)
 

@@ -73,8 +73,8 @@ class DMC_Env(gym.Env):
     def step(self, raw_action):
         # 1) The agent’s action is in [-1, +1]. Scale it to the real domain:
         scaled_action = self._scale_action(raw_action)
-        print("raw action", raw_action)
-        print("scaled action", scaled_action)
+        # print("raw action", raw_action)
+        # print("scaled action", scaled_action)
 
         # 3) Step the environment:
         output = self.struct.iterate(scaled_action)
@@ -87,6 +87,8 @@ class DMC_Env(gym.Env):
                 tempstate.append(param[0])
         self.state = np.array(tempstate, dtype=np.float32)
         self.steps += 1
+
+        # print(output)
 
         # Reward
         rew = reward_function(self.struct, output)
