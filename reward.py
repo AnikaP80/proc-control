@@ -1,3 +1,5 @@
+import numpy as np
+
 def reward_function(struct, output):
     """
     Improved reward function for RL agent controlling DMCs.
@@ -5,24 +7,33 @@ def reward_function(struct, output):
     """
     keq = float(output[2])
     reward = 100.0 * keq  # Production-focused reward
-    # print(reward)
+    # print(output)
     penalty = 0.0
 
-
     for i in range(struct.getSize()):
-        for bound in struct.getConstraints(i):  # [current, LB, UB]
-            value, lb, ub = bound
-            range_span = ub - lb if ub < float('inf') else 1.0  # avoid inf issues
+        constraints = np.array(struct.getConstraints(i))  # shape: (N, 3)
+        if constraints.size == 0:
+            continue  # skip empty constraints
+        
+        values = constraints[:, 0]
+        lbs = constraints[:, 1]
+        ubs = constraints[:, 2]
 
-            # Soft penalty as value nears the bounds
-            center = (ub + lb) / 2 if ub < float('inf') else lb*2  # avoid inf issues
+        # Handle infinite upper bounds
+        range_spans = np.where(ubs < np.inf, ubs - lbs, 1.0)
+        centers = np.where(ubs < np.inf, (ubs + lbs) / 2, lbs * 2)
 
-            norm_offset = abs(value - center) / (range_span / 2)
-            penalty += norm_offset**2  # quadratic penalty increases fast near edges
+        norm_offsets = np.abs(values - centers) / range_spans
+        penalty += np.sum(norm_offsets**2)
 
-            # Hard penalty if out of bounds
-            if value < lb or value > ub:
-                penalty += 5.0
+        # Hard penalties
+        out_of_bounds = (values < lbs) | (values > ubs)
+        penalty += np.sum(out_of_bounds) * 5.0
+
+        # Reward in-bounds
+        in_bounds = ~out_of_bounds
+        penalty -= np.sum(in_bounds) * 2.0
+    
     reward -= penalty
-    # print(reward, penalty)
+    # print(reward)
     return reward

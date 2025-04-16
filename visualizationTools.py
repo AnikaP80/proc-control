@@ -14,6 +14,7 @@ def simVis(arr):
     # Initialize storage
     all_constraints = [[] for _ in range(n_dmcs)]
     all_goals = [[] for _ in range(n_dmcs)]
+    all_rewards = []
     final_outputs = []
 
     # Iterate
@@ -24,7 +25,8 @@ def simVis(arr):
             # print("updated temp")
         # print(tempGoals)
         final_output = struct.iterate(tempGoals)
-        print(reward_function(struct, final_output))
+        # print(reward_function(struct, final_output))
+        all_rewards.append(reward_function(struct, final_output))
         final_outputs.append(final_output)
 
         for i in range(n_dmcs):
@@ -44,11 +46,11 @@ def simVis(arr):
     iterations = list(range(1, n_iter + 1))
 
     cols = 3  # number of plots per row
-    rows = math.ceil(n_dmcs / cols)
+    rows = math.ceil((n_dmcs + 1) / cols)
     fig, axs = plt.subplots(rows, cols, figsize=(cols * 6, rows * 4), sharex=True)
 
     axs = axs.flatten()
-
+        
     for i in range(n_dmcs):
         base_ax = axs[i]
 
@@ -82,8 +84,13 @@ def simVis(arr):
         base_ax.set_title(f"DMC{i}: {arr[i][2]}")
         base_ax.set_xlabel("Iteration")
 
+    ax = axs[n_dmcs]
+    ax.plot(iterations, all_rewards, label="Reward")
+    ax.set_title("Reward func")
+    ax.set_xlabel("Iteration")
+    
     # Hide unused axes
-    for j in range(n_dmcs, len(axs)):
+    for j in range(n_dmcs + 1, len(axs)):
         fig.delaxes(axs[j])
 
     fig.suptitle("Outputs and Goals Per DMC Over Time", fontsize=16)
