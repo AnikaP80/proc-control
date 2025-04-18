@@ -1,73 +1,85 @@
 import argparse
 import logging
-from datetime import datetime
+import os
 import numpy as np
-
-# Import your SAC Actor and the custom environment
 from sac import Actor
 from DMC_Env import DMC_Env  # Import your custom environment
 
-# from https://github.com/shakti365/soft-actor-critic/blob/master/src/play.py
-
 logging.basicConfig(level='INFO')
 
-parser = argparse.ArgumentParser(description='SAC')
-parser.add_argument('--seed', type=int, default=42, help='random seed')
-parser.add_argument('--render', type=bool, default=False, help='set gym environment to render display')
-parser.add_argument('--verbose', type=bool, default=False, help='log execution details')
-parser.add_argument('--model_path', type=str, default='../data/models/', help='path to save model')
-parser.add_argument('--model_name', type=str,
-                    default=f'{str(datetime.utcnow().date())}-{str(datetime.utcnow().time())}',
-                    help='name of the saved model')
+def main(cli_args=None):
+    """
+    Run a single episode of the trained SAC policy on the DMC environment.
+    Loads weights from HDF5 (.h5) format.
+    Ensures model variables are built before loading.
+    """
+    parser = argparse.ArgumentParser(description='DMC Play')
+    parser.add_argument('--seed',       type=int, default=42, help='random seed')
+    parser.add_argument('--render',     action='store_true', help='render environment')
+    parser.add_argument('--verbose',    action='store_true', help='log execution details')
+    parser.add_argument('--model_root', type=str, default='./data/models/',
+                        help='parent directory for saved models')
+    parser.add_argument('--model_name', type=str, required=True,
+                        help='timestamp folder name of saved model')
+    args = parser.parse_args(cli_args)
 
-while True:
-    args = parser.parse_args()
+    # Determine the model directory
+    model_root = os.path.normpath(args.model_root)
+    model_dir = os.path.join(model_root, args.model_name)
+    if args.verbose:
+        logging.info(f"Loading weights from directory: {model_dir}")
+        logging.info(f"Directory contents: {os.listdir(model_dir)}")
 
-    # Define your DMC connection list (DMCarr) as needed by your DMC_Env.
-    DMCarr = [[] for i in range(10)]
-            # index, next, func, goal, input (T, P, Keq)
+    # Build environment
+    DMCarr = [[] for _ in range(10)]
     DMCarr[0] = [0, [0, 1], "DMC0", 400, [350, 5, 1]]
-    DMCarr[1] = [1, [2], "DMC1", 400, [350, 5, 1]]
+    DMCarr[1] = [1, [2],    "DMC1", 400, [350, 5, 1]]
     DMCarr[2] = [2, [3, 5], "DMC2", 450, [350, 5, 1]]
-    DMCarr[3] = [3, [4], "DMC3", 420, [350, 5, 1]]
-    DMCarr[4] = [4, [5], "DMC4", 500, [450, 5, 1]]
-    DMCarr[5] = [5, [], "DMC5", 350, [350, 5, 1]]
+    DMCarr[3] = [3, [4],    "DMC3", 420, [350, 5, 1]]
+    DMCarr[4] = [4, [5],    "DMC4", 500, [450, 5, 1]]
+    DMCarr[5] = [5, [],     "DMC5", 350, [350, 5, 1]]
     DMCarr[6] = [6, [1, 6], "DMC6", 350, [350, 5, 1]]
     DMCarr[7] = [7, [3, 7], "DMC7", 470, [350, 5, 1]]
     DMCarr[8] = [8, [5, 8], "DMC8", 400, [350, 5, 1]]
     DMCarr[9] = [9, [2, 3, 4, 9], "DMC9", 500, [350, 5, 1]]
-    print("DMC array:", DMCarr)
 
-    # Instantiate the custom environment with DMCarr.
     env = DMC_Env(DMCarr)
 
-    # Get the dimensions from the environment's spaces.
-    state_space = env.observation_space.shape[0]
-    action_space = env.action_space.shape[0]
+    # Rebuild and load the policy network
+    actor = Actor(env.action_space.shape[0])
 
-    # Instantiate the Actor with the number of actions (dimensions).
-    actor = Actor(action_space)
-    actor.load_weights(args.model_path + args.model_name + '/model')
+    # Build variables by a dummy forward pass before loading HDF5 weights
+    dummy_state = np.zeros((1, env.observation_space.shape[0]), dtype=np.float32)
+    _ = actor(dummy_state)
 
-    # Reset the environment to get the initial state.
-    current_state = env.reset()
-    episode_reward = 0
+    # Load from HDF5
+    h5_path = os.path.join(model_dir, 'policy.h5')
+    if os.path.isfile(h5_path):
+        actor.load_weights(h5_path)
+        if args.verbose:
+            logging.info(f"Loaded weights from HDF5 file: {h5_path}")
+    else:
+        raise FileNotFoundError(f"HDF5 file not found at {h5_path}")
+
+    # Run one episode and print actions
+    state = env.reset()
     done = False
+    episode_reward = 0.0
+    last_action = None
 
     while not done:
         if args.render:
             env.render()
-
-        # Reshape the state to match the Actor's expected input shape.
-        current_state_ = np.array(current_state, ndmin=2)
-        action_, _ = actor(current_state_)
-        action = action_.numpy()[0]
-
-        # Step through the environment using the action.
-        next_state, reward, done, _ = env.step(action)
+        state_input = np.array(state, ndmin=2)
+        action_tensor, _ = actor(state_input)
+        action = action_tensor.numpy()[0]
+        last_action = action
+        print("Action:", action)
+        state, reward, done, _ = env.step(action)
         episode_reward += reward
 
-        # Update current state.
-        current_state = next_state
+    print(f"Episode reward: {episode_reward}")
+    print("Last Action", last_action)
 
-    print("Episode reward:", episode_reward)
+if __name__ == '__main__':
+    main()

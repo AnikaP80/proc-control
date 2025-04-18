@@ -5,11 +5,11 @@ import numpy as np
 class ReplayBuffer:
 
     def __init__(self, state_space, action_space, max_size=100000):
-        self.current_states = np.empty((0, state_space), dtype=np.float64)
-        self.actions = np.empty((0, action_space), dtype=np.float64)
-        self.rewards = np.empty((0, 1), dtype=np.float64)
-        self.next_states = np.empty((0, state_space), dtype=np.float64)
-        self.ends = np.empty((0, 1), dtype=np.float64)
+        self.current_states = np.empty((0, state_space), dtype=np.float32)
+        self.actions = np.empty((0, action_space), dtype=np.float32)
+        self.rewards = np.empty((0, 1), dtype=np.float32)
+        self.next_states = np.empty((0, state_space), dtype=np.float32)
+        self.ends = np.empty((0, 1), dtype=np.float32)
         self.total_size = 0
         self.max_size = max_size
 
