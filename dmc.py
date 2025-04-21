@@ -4,7 +4,12 @@ class DMC_controller:
     def __init__(self, functionName):
         self.functionName = functionName
         self.R = 8.314
-        
+
+        """_summary_
+        The following functions are alternating definitions of the DMCs.
+        Each function is defined as a function of the current state and the setpoint.
+        The function returns the next state of the DMC.
+        """
     def _DMC0(self, inputList, Tset):
         Tcurr = inputList[0]
         P = inputList[1]
@@ -194,7 +199,7 @@ class DMC_controller:
     def DMC9constraints(self):
         return [[400, 600], [1, 3], [1.3, float('inf')]]
     
-    
+    # get the constraints for the DMC
     def getConstraints(self):
         method = getattr(self, f"{self.functionName}constraints", None)
         if callable(method):
@@ -202,6 +207,8 @@ class DMC_controller:
         else:
             return [[0, 0], [0, 0], [0, 0]]
     
+    # get the update value for the DMC
+    # inputList = [Tcurr, P, prevKeq]
     def update(self, goal, inputList):
         method = getattr(self, f"_{self.functionName}", None)
         if callable(method):

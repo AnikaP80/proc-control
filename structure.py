@@ -12,7 +12,8 @@ class DMC_structure:
     def __init__(self, DMCconnectionList):
         self.DMCconnectionList = DMCconnectionList
         self.outputList = [[0, 0, 0] for _ in range(len(DMCconnectionList))]
-
+    
+    # SETTERS AND GETTERS FOR THE DMC STRUCTURE
     def setGoal(self, DMCnumber, newGoal):
         self.DMCconnectionList[DMCnumber][3] = newGoal
         # print("Set the goal of ", DMCnumber, " to ", newGoal)

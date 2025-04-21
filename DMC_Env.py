@@ -17,11 +17,11 @@ class DMC_Env(gym.Env):
         # Create DMC_structure
         self.struct = DMC_structure(DMCarr)
         
-        # Determine the number of DMCs, which is also the dimensionality of the action space.
+        # Set the number of DMCs, which determines the dimensionality of the action space
         self.num_DMC = len(DMCarr)
 
-        # Instead of using the large real-range as the Gym action_space,
-        # define it as [-1, +1] for each dimension:
+        # Define the action space as a continuous space in the range [-1, +1] for each dimension
+        # The action space is a Box space with shape (num_DMC,)
         self.action_space = spaces.Box(
             low  = -1.0,
             high =  1.0,
@@ -29,9 +29,8 @@ class DMC_Env(gym.Env):
             dtype=np.float32
         )
 
-        # But we still need to remember the true real range for each DMC:
-        # e.g. for DMC i, the "real" action range is [low_i, high_i].
-        # Suppose you already know them or build them with constraints:
+        # Store the real action range for each DMC
+        # This is the range of each parameter in the DMC structure
         real_action_lows = []
         real_action_highs = []
         for i in range(self.num_DMC):
@@ -44,8 +43,7 @@ class DMC_Env(gym.Env):
         self.real_action_low = np.array(real_action_lows, dtype=np.float32)
         self.real_action_high = np.array(real_action_highs, dtype=np.float32)
 
-        # For the observation space, your existing approach is OK,
-        # or you can keep it simpler. We'll just keep your style:
+        # Define the observation space with dimensions based on the number of DMCs
         obs_dim = 3 * self.num_DMC  # if each DMC has 3 parameters
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32

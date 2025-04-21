@@ -1,5 +1,7 @@
 import numpy as np
 
+# This function calculates the reward for the RL agent controlling DMCs.
+# It takes into account the production (Keq), safety (constraint violations), and stability.
 def reward_function(struct, output):
     """
     Improved reward function for RL agent controlling DMCs.

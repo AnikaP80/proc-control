@@ -45,7 +45,7 @@ def simVis(arr):
     # Plotting
     iterations = list(range(1, n_iter + 1))
 
-    cols = 3  # number of plots per row
+    cols = 4  # number of plots per row
     rows = math.ceil((n_dmcs + 1) / cols)
     fig, axs = plt.subplots(rows, cols, figsize=(cols * 6, rows * 4), sharex=True)
 
