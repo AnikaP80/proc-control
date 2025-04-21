@@ -1,7 +1,10 @@
-numpy
+# You need at the latest python 3.9 - python 3.9.13 is the last binary install you can get.
+numpy>=1.19.5,<2.0.0
 pandas
 scipy
-tensorflow
+tensorflow==2.10.0
 matplotlib
 scikit-learn
 jupyter
+gym
+tensorflow-probability>=0.16.0
