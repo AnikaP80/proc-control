@@ -1,5 +1,5 @@
 from dmc import DMC_controller
-import copy
+import numpy as np
 """
 
 
@@ -10,35 +10,30 @@ import copy
 class DMC_structure:
         
     def __init__(self, DMCconnectionList):
-        """_summary_  
-        Args:
-            DMCconnectionList: array with the following specifications:
-            
-            DMC Number, connected DMCs, DMC function name, goal, constraints, parameters, DMC input
-            ex: 
-            [[0, [1], PID, 25, [1, 0, 0], [20, ...], [25, 6, 1]],
-             [1, [2], random, 10, [0, 10, 21], [10, ...], [5, 20, 100]],
-             ]
-             
-             0 is our starting DMC
-             2 is our output DMC
-        """
         self.DMCconnectionList = DMCconnectionList
-
+        self.outputList = [[0, 0, 0] for _ in range(len(DMCconnectionList))]
+    
+    # SETTERS AND GETTERS FOR THE DMC STRUCTURE
     def setGoal(self, DMCnumber, newGoal):
         self.DMCconnectionList[DMCnumber][3] = newGoal
+        # print("Set the goal of ", DMCnumber, " to ", newGoal)
         return
     
-    def setConstraints(self, DMCnumber, newConstraints):
-        self.DMCconnectionList[DMCnumber][4] = newConstraints
-        return
+    def getGoal(self, DMCnumber):
+        return self.DMCconnectionList[DMCnumber][3]
     
-    def setParameters(self, DMCnumber, newParams):
-        self.DMCconnectionList[DMCnumber][5] = newParams
-        return
+    def getConstraints(self, DMCnumber):
+        struct = DMC_controller(self.DMCconnectionList[DMCnumber][2])
+        constraints = np.array(struct.getConstraints())  # shape: (N, 2)
+        outputs = np.array(self.outputList[DMCnumber])   # shape: (N,)
+
+        full_array = np.column_stack((outputs, constraints))  # shape: (N, 3)
+
+        fullList = full_array.tolist()
+        return fullList
     
-    def getParameters(self, DMCnumber):
-        return self.DMCconnectionList[DMCnumber][5]
+    def getSize(self):
+        return len(self.outputList)
     
     """_summary_
         iterate through the DMC's and update them
@@ -47,33 +42,38 @@ class DMC_structure:
         
         
     """
-    def iterate(self):
-        # make copy of list
-        newDMCoutputs = [[] for _ in range(len(self.DMCconnectionList))]
-        newDMCoutputs[0] = self.DMCconnectionList[0][-1]
-        output = []
-        for i in range(len(self.DMCconnectionList)):
-            # output = DMC(input)
-            
-            arr = self.DMCconnectionList[i]
-            (DMCconnections, DMCparams, DMCinput) = (arr[1], arr[2:6], arr[6])
-            print("\t arr ", arr);
-            print("\t Connect ", DMCconnections)
-            
-            output = DMC_controller(*(DMCparams)).update(DMCinput)
-            
-            # update DMCs that need the output
-            # CURRENT ASSUMPTION - if two DMC's point to the same thing, 
-            #   just do a basic override.
-            
-            print(DMCconnections)
-            for adjDMC in DMCconnections:
-                newDMCoutputs[adjDMC] = output
-            print("DMC", i, "'s output: ", output)
-        
-        print(newDMCoutputs)
-        # update DMCconnectionList
-        for i in range(len(self.DMCconnectionList)):
-            self.DMCconnectionList[i][-1] = newDMCoutputs[i]
+    def iterate(self, newTemperatureGoals):
+        num_DMCs = len(self.DMCconnectionList)
+        newDMCoutputs = [[] for _ in range(num_DMCs)]
+        final_output = None
 
-        return output
+        for i, (index, DMCconnections, DMCfunc, _, DMCinput) in enumerate(self.DMCconnectionList):
+            struct = DMC_controller(DMCfunc)
+            DMCgoal = newTemperatureGoals[i]
+
+            # Update the current DMC
+            output = struct.update(DMCgoal, DMCinput)
+
+            # If this DMC has no outgoing connections, it's the final output
+            if not DMCconnections:
+                final_output = output
+
+            # Propagate output to connected DMCs
+            for adjDMC in DMCconnections:
+                newDMCoutputs[adjDMC].append(output)
+
+        # Aggregate incoming outputs and update internal state
+        for i, outputs in enumerate(newDMCoutputs):
+            if outputs:
+                # Average element-wise over the outputs
+                mean = [sum(col) / len(col) for col in zip(*outputs)]
+                self.outputList[i] = mean
+
+                # Update the last element in DMCconnectionList accordingly
+                old_last = self.DMCconnectionList[i][-1]
+                if old_last[2] == mean[2]:
+                    self.DMCconnectionList[i][-1] = [mean[0], mean[1], float('inf')]
+                else:
+                    self.DMCconnectionList[i][-1] = mean
+
+        return final_output

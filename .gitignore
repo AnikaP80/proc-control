@@ -1,0 +1,34 @@
+# Virtual environment
+__pycache__
+venv_proc-control/
+venv_tf210/
+myenv/
+.env/
+.VSCodeCounter
+
+# Python compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Dependency logs
+pip-log.txt
+pip-wheel-metadata/
+
+# Editor settings
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Jupyter notebooks
+.ipynb_checkpoints/
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+ 
