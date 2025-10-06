@@ -3,7 +3,6 @@ This document outlines the past, most complete simulation structure.
 
 At the time of writing, this is what was done during the semester. 
 
-
 ## Explanation of DMC_controller, DMC_structure, and data generation.
 A major component of the model is the data generation and simulation. Because all the data is generated, it is crucial to create is accurately. The two main classes are DMC_controller and DMC_structure.
 
